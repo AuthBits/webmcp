@@ -61,6 +61,8 @@ _load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 LLM_URL = os.environ.get("LLM_URL", "")
 LLM_MODEL = os.environ.get("LLM_MODEL", "")
+SEARCH_PROVIDER = os.environ.get("SEARCH_PROVIDER", "ddg").strip().lower()
+SEARXNG_URL = os.environ.get("SEARXNG_URL", "").strip()
 
 if not LLM_URL or not LLM_MODEL:
     raise ValueError("LLM_URL and LLM_MODEL environment variables are required")
@@ -201,6 +203,32 @@ async def _search_ddg(query: str, limit: int) -> list[dict]:
         for r in results
     ]
 
+
+async def _search_searxng(query: str, limit: int) -> list[dict]:
+    """Search using a SearXNG instance."""
+    if not SEARXNG_URL:
+        raise ValueError("SEARXNG_URL is required when SEARCH_PROVIDER=searxng")
+
+    base_url = SEARXNG_URL.rstrip("/")
+    async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+        resp = await client.get(
+            f"{base_url}/search",
+            params={"q": query, "format": "json"},
+            headers={"User-Agent": "webmcp/1.0"},
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+
+    results = payload.get("results", [])[:limit]
+    return [
+        {
+            "title": r.get("title", ""),
+            "url": r.get("url", ""),
+            "description": r.get("content", ""),
+        }
+        for r in results
+    ]
+
 # ============================================================================
 # Tool Call Logging
 # ============================================================================
@@ -272,8 +300,18 @@ async def get_current_date() -> str:
 @mcp.tool()
 async def search_web(query: str, limit: int = 10) -> str:
     """Searches the web for a query. Returns titles, URLs, and descriptions."""
-    data = await _search_ddg(query, limit)
-    _tool_logger.log_call("search_web", {"query": query, "limit": limit}, json.dumps(data))
+    if SEARCH_PROVIDER == "searxng":
+        data = await _search_searxng(query, limit)
+    elif SEARCH_PROVIDER == "ddg":
+        data = await _search_ddg(query, limit)
+    else:
+        raise ValueError("SEARCH_PROVIDER must be either 'ddg' or 'searxng'")
+
+    _tool_logger.log_call(
+        "search_web",
+        {"query": query, "limit": limit, "provider": SEARCH_PROVIDER},
+        json.dumps(data)
+    )
     return json.dumps(data, indent=2)
 
 

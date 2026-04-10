@@ -2,7 +2,7 @@
 
 `webmcp` is an MCP server for web search and content extraction. LLM agents can use it to:
 
-- search the web with DuckDuckGo
+- search the web with DuckDuckGo (default) or SearXNG (optional)
 - fetch and clean page content from one or more URLs
 - send cleaned content to a local LLM for structured extraction
 
@@ -13,6 +13,7 @@
 - browser-based fetching with Playwright for JavaScript-heavy sites
 - lightweight HTTP fetching mode for faster/simple pages
 - persistent tool-call logging to `tool_calls.log.json`
+- configurable search provider: DDG by default, optional SearXNG
 
 ## Critical Requirement
 
@@ -43,9 +44,26 @@ The app reads LLM settings from environment variables and supports a local `.env
 ```env
 LLM_URL=http://localhost:1234
 LLM_MODEL=your-model-name
+SEARCH_PROVIDER=ddg
+# Optional when SEARCH_PROVIDER=searxng
+SEARXNG_URL=http://localhost:8080
 ```
 
 `LLM_URL` and `LLM_MODEL` are required at startup.
+`SEARCH_PROVIDER` defaults to `ddg`. Set it to `searxng` to replace DDG, and provide `SEARXNG_URL`.
+
+## Search Providers
+
+`search_web` supports two providers:
+
+- `ddg` (default): uses DuckDuckGo via `ddgs`
+- `searxng`: uses your SearXNG instance
+
+SearXNG notes:
+
+- Set `SEARCH_PROVIDER=searxng`
+- Set `SEARXNG_URL` to your instance base URL (for example, `http://192.168.0.55:8888`)
+- `webmcp` calls `<SEARXNG_URL>/search` with `format=json`
 
 ## Install
 
