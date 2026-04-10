@@ -63,6 +63,8 @@ LLM_URL = os.environ.get("LLM_URL", "")
 LLM_MODEL = os.environ.get("LLM_MODEL", "")
 SEARCH_PROVIDER = os.environ.get("SEARCH_PROVIDER", "ddg").strip().lower()
 SEARXNG_URL = os.environ.get("SEARXNG_URL", "").strip()
+# Appended to every DuckDuckGo (ddgs) text search query.
+DDG_QUERY_SITE_EXCLUDE = "-site:grokipedia.com"
 
 if not LLM_URL or not LLM_MODEL:
     raise ValueError("LLM_URL and LLM_MODEL environment variables are required")
@@ -193,7 +195,9 @@ async def _llm_extract(content: str, prompt: str | None, schema: dict | None) ->
 
 async def _search_ddg(query: str, limit: int) -> list[dict]:
     """Search using DuckDuckGo."""
-    results = DDGS().text(query, max_results=limit)
+    base = query.strip()
+    ddg_query = f"{base} {DDG_QUERY_SITE_EXCLUDE}" if base else DDG_QUERY_SITE_EXCLUDE
+    results = DDGS().text(ddg_query, max_results=limit)
     return [
         {
             "title": r.get("title", ""),
