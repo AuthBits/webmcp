@@ -90,6 +90,11 @@ Server starts on:
 - `extract(..., use_browser=False)` is faster for static pages.
 - If extraction quality is poor, the LLM should provide a more specific `prompt` and/or a stricter `schema`.
 
+## TODO
+
+- Revisit JS page rendering and extraction strategy. Right now, roughly 25-30% of pages return little or no usable content even when fetched successfully.
+- Improve anti-bot handling for page fetches. Many targets still return 400-range errors, so investigate stronger browser mimicry (Playwright/Chromium behavior, headers, fingerprinting, and potentially user-agent/profile rotation).
+
 ## License
 
 MIT. See `LICENSE`.
