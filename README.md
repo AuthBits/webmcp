@@ -71,3 +71,7 @@ Server starts on:
 - `extract(..., use_browser=True)` is best for dynamic pages that require JS rendering.
 - `extract(..., use_browser=False)` is faster for static pages.
 - If extraction quality is poor, the LLM should provide a more specific `prompt` and/or a stricter `schema`.
+
+## License
+
+MIT. See `LICENSE`.
